@@ -9,8 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.constants import SESSION_COOKIE_NAME
 from src.database import get_session
-from src.database_operations import add_message, create_chat_session, get_chat_session, get_messages
-from src.schemas import ChatRequest, ChatResponse
+from src.database_operations import add_message, create_chat_session, get_chat_session, get_messages, get_all_chat_sessions
+from src.schemas import ChatRequest, ChatResponse, ChatSessionOut
 from src.services.chat_service import generate_ai_response
 
 templates = Jinja2Templates(directory=str(Path(__file__).parent.parent / "templates"))
@@ -97,6 +97,28 @@ async def get_chat_history(
     
     # Convert messages to dictionaries
     return [msg.model_dump() for msg in messages]
+
+
+@chat_router.get("/sessions")
+async def list_chat_sessions(
+    request: Request,
+    db: AsyncSession = Depends(get_session)
+):
+    """List all chat sessions"""
+    sessions = await get_all_chat_sessions(db)
+    return [
+        {
+            "session_id": session.session_id,
+            "created_at": session.created_at.isoformat() if session.created_at else None
+        }
+        for session in sessions
+    ]
+
+
+@chat_router.get("/sessions/page")
+async def view_chat_sessions(request: Request):
+    """Render the chat sessions page"""
+    return templates.TemplateResponse("sessions.html", {"request": request})
 
 
 @chat_router.get("/session")

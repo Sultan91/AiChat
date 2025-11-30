@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Sessions</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .session-card {
+            transition: all 0.2s ease-in-out;
+        }
+        .session-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-6">
+    <div class="max-w-4xl mx-auto">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Chat Sessions</h1>
+            <a href="/" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition">Back to Chat</a>
+        </div>
+        
+        <div id="sessions-container" class="space-y-4">
+            <!-- Sessions will be loaded here -->
+            <div id="loading" class="text-center py-8">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+                <p class="mt-2 text-gray-600">Loading sessions...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const container = document.getElementById('sessions-container');
+            
+            try {
+                const response = await fetch('/chat/sessions');
+                if (!response.ok) {
+                    throw new Error('Failed to load sessions');
+                }
+                
+                const sessions = await response.json();
+                
+                if (sessions.length === 0) {
+                    container.innerHTML = `
+                        <div class="bg-white p-6 rounded-lg shadow text-center">
+                            <p class="text-gray-600">No chat sessions found.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = sessions.map(session => `
+                    <div class="session-card bg-white rounded-lg shadow overflow-hidden">
+                        <a href="/chat/history?session_id=${session.session_id}" class="block p-6 hover:bg-gray-50">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <h3 class="font-medium text-gray-900">Session ID: ${session.session_id}</h3>
+                                    <p class="text-sm text-gray-500 mt-1">
+                                        Created: ${new Date(session.created_at).toLocaleString()}
+                                    </p>
+                                </div>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </a>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Error loading sessions:', error);
+                container.innerHTML = `
+                    <div class="bg-red-50 border-l-4 border-red-500 p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-red-700">
+                                    Failed to load chat sessions. Please try again later.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

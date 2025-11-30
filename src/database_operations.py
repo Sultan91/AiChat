@@ -1,6 +1,7 @@
 from typing import List
 
-from sqlalchemy import select
+from sqlalchemy import select, desc
+from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models import ChatSession, Message, Document
@@ -51,6 +52,17 @@ async def get_messages(db: AsyncSession, session_id: int) -> List[MessageOut]:
     messages = result.scalars().all()
     # Convert to MessageOut models which include all required fields
     return [MessageOut.model_validate(msg) for msg in messages]
+
+
+async def get_all_chat_sessions(db: AsyncSession) -> List[ChatSession]:
+    """
+    Get all chat sessions, ordered by creation date (newest first)
+    """
+    result = await db.execute(
+        select(ChatSession)
+        .order_by(desc(ChatSession.created_at))
+    )
+    return result.scalars().all()
 
 
 async def add_document(db: AsyncSession, filename: str, content: str) -> Document:
