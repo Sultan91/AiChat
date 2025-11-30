@@ -8,6 +8,7 @@ DB_NAMING_CONVENTION = {
     "pk": "%(table_name)s_pkey",
 }
 
+SESSION_COOKIE_NAME = 'session'
 
 class Environment(str, Enum):
     LOCAL = "LOCAL"
