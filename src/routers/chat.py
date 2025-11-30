@@ -1,7 +1,10 @@
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends
-from fastapi import Request, Response
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi import Request, Response, status
+from fastapi.templating import Jinja2Templates
+from pathlib import Path
+from typing import Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.constants import SESSION_COOKIE_NAME
@@ -10,6 +13,7 @@ from src.database_operations import add_message, create_chat_session, get_chat_s
 from src.schemas import ChatRequest, ChatResponse
 from src.services.chat_service import generate_ai_response
 
+templates = Jinja2Templates(directory=str(Path(__file__).parent.parent / "templates"))
 chat_router = APIRouter(prefix="/chat")
 
 
@@ -64,3 +68,69 @@ async def chat(req: ChatRequest,
         session_id=chat_session.session_id,
         history=history_dicts
     )
+
+
+@chat_router.get("/{session_id}/history")
+async def get_chat_history(
+    session_id: str,
+    db: AsyncSession = Depends(get_session)
+):
+    """
+    Retrieve message history for a specific chat session.
+    
+    Args:
+        session_id: The ID of the chat session
+        
+    Returns:
+        List of messages in the chat history
+    """
+    # Get the chat session
+    chat_session = await get_chat_session(db, session_id)
+    if not chat_session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chat session not found"
+        )
+    
+    # Get messages for the session
+    messages = await get_messages(db, chat_session.id)
+    
+    # Convert messages to dictionaries
+    return [msg.model_dump() for msg in messages]
+
+
+@chat_router.get("/session")
+async def get_session_id(request: Request):
+    """Get the current session ID from cookies"""
+    session_id = request.cookies.get(SESSION_COOKIE_NAME)
+    if not session_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No active session found"
+        )
+    return {"session_id": session_id}
+
+
+@chat_router.get("/history")
+async def view_chat_history(
+    request: Request,
+    session_id: str,
+    db: AsyncSession = Depends(get_session)
+):
+    """Render the chat history page"""
+    # Verify session exists
+    chat_session = await get_chat_session(db, session_id)
+    if not chat_session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chat session not found"
+        )
+    
+    return templates.TemplateResponse(
+        "history.html",
+        {
+            "request": request,
+            "session_id": session_id
+        }
+    )
+

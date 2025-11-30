@@ -19,10 +19,16 @@
             height: 400px;
             overflow-y: auto;
         }
+        .chat-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
         #message-input {
-            width: 70%;
+            flex-grow: 1;
             padding: 10px;
-            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
         }
         button {
             padding: 10px 20px;
@@ -56,8 +62,11 @@
         <div class="message bot-message">Hello! How can I help you today?</div>
     </div>
     <div>
-        <input type="text" id="message-input" placeholder="Type your message...">
-        <button id="send-button">Send</button>
+        <div class="chat-controls">
+            <input type="text" id="message-input" placeholder="Type your message...">
+            <button id="send-button">Send</button>
+            <button id="history-button" style="background-color: #6c757d;">View History</button>
+        </div>
     </div>
 
     <script>
@@ -102,6 +111,21 @@
                 chatContainer.appendChild(messageDiv);
                 chatContainer.scrollTop = chatContainer.scrollHeight;
             }
+
+            // Add history button click handler
+            document.getElementById('history-button').addEventListener('click', async function() {
+                try {
+                    const response = await fetch('/chat/session');
+                    if (!response.ok) {
+                        throw new Error('No active session');
+                    }
+                    const data = await response.json();
+                    window.open(`/chat/history?session_id=${data.session_id}`, '_blank');
+                } catch (error) {
+                    alert('No active chat session found. Please send a message first.');
+                    console.error('Error fetching session:', error);
+                }
+            });
 
             sendButton.addEventListener('click', sendMessage);
             messageInput.addEventListener('keypress', (e) => {
