@@ -1,12 +1,10 @@
-from pydantic import PostgresDsn, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
 import os
 from dotenv import load_dotenv
 from pathlib import Path
 
 load_dotenv()
 
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", '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')
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 MODEL_NAME = "openai/gpt-oss-20b:free"
 KB_PATH = "knowledge_base"
 

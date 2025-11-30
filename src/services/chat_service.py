@@ -1,9 +1,7 @@
 from typing import List, Dict, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
 from sqlalchemy import select
-from datetime import datetime
 
 from src.models import Message
 from src.schemas import MessageOut
@@ -93,7 +91,7 @@ async def generate_ai_response(
                 question=user_message
             )
             # Insert system prompt at the beginning
-            message_dicts.insert(0, {"role": "system", "content": system_prompt})
+            message_dicts.insert(0, {"role": "assistant", "content": system_prompt})
     
     # 5. Call the LLM
     ai_reply = ask_openrouter(message_dicts)
