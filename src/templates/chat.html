@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat Interface</title>
+    <title>AI Chat</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -73,6 +73,52 @@
     </div>
 
     <script>
+        // Tab notification variables
+        const originalTitle = document.title;
+        let isTabActive = true;
+        let notificationInterval = null;
+
+        // Function to update tab title with notification
+        function updateTabNotification(showNotification) {
+            if (showNotification && !isTabActive) {
+                // Only update if it's not already showing notification
+                if (!document.title.startsWith('💬 ')) {
+                    document.title = `💬 New message - ${originalTitle}`;
+                }
+            } else {
+                document.title = originalTitle;
+            }
+        }
+
+        // Toggle notification effect
+        function toggleNotification(enable) {
+            if (enable) {
+                if (!notificationInterval) {
+                    // Blink the title to get attention
+                    notificationInterval = setInterval(() => {
+                        document.title = document.title === originalTitle
+                            ? `💬 New message - ${originalTitle}`
+                            : originalTitle;
+                    }, 1000);
+                }
+            } else {
+                if (notificationInterval) {
+                    clearInterval(notificationInterval);
+                    notificationInterval = null;
+                }
+                document.title = originalTitle;
+            }
+        }
+
+        // Setup tab visibility change listener
+        document.addEventListener('visibilitychange', () => {
+            isTabActive = !document.hidden;
+            if (isTabActive) {
+                // Clear notification when tab becomes active
+                toggleNotification(false);
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
             const chatContainer = document.getElementById('chat-container');
             const messageInput = document.getElementById('message-input');
@@ -84,23 +130,28 @@
 
                 // Add user message to chat
                 addMessage('user', message);
+                toggleNotification(false); // Clear any notifications when user sends a message
                 messageInput.value = '';
 
                 try {
-                    const response = await fetch('/chat', {  // Remove trailing slash to match FastAPI router prefix
+                    const response = await fetch('/chat', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
                             message: message,
-                            // Add other required fields from your ChatRequest model
                         }),
-                        credentials: 'include'  // Important for cookies - use 'include' for cross-origin requests
+                        credentials: 'include'
                     });
 
                     const data = await response.json();
                     addMessage('bot', data.reply);
+
+                    // Show notification only if tab is not active
+                    if (!isTabActive) {
+                        toggleNotification(true);
+                    }
                 } catch (error) {
                     console.error('Error:', error);
                     addMessage('bot', 'Sorry, there was an error processing your message.');
@@ -134,6 +185,13 @@
             messageInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     sendMessage();
+                }
+            });
+
+            // Clear notification when clicking anywhere in the window
+            window.addEventListener('click', () => {
+                if (isTabActive) {
+                    toggleNotification(false);
                 }
             });
         });
