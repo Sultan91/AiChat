@@ -59,7 +59,6 @@ async def chat(req: ChatRequest,
     history_dicts = [msg.model_dump() for msg in history]
 
     agent_reply = await generate_ai_response(db, chat_session.id, req.message)
-    await add_message(db, chat_session.id, "assistant", agent_reply)
 
     # Convert MessageOut objects to dictionaries before returning
 
@@ -77,10 +76,10 @@ async def get_chat_history(
 ):
     """
     Retrieve message history for a specific chat session.
-    
+
     Args:
         session_id: The ID of the chat session
-        
+
     Returns:
         List of messages in the chat history
     """
@@ -91,10 +90,10 @@ async def get_chat_history(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Chat session not found"
         )
-    
+
     # Get messages for the session
     messages = await get_messages(db, chat_session.id)
-    
+
     # Convert messages to dictionaries
     return [msg.model_dump() for msg in messages]
 
@@ -127,7 +126,7 @@ async def delete_chat_session(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Chat session not found"
         )
-    
+
     # Delete messages first due to foreign key constraint
     await db.execute(
         delete(Message).where(Message.session_id == session.id)
@@ -135,7 +134,7 @@ async def delete_chat_session(
     # Then delete the session
     await db.delete(session)
     await db.commit()
-    
+
     return {"status": "success", "message": "Session deleted successfully"}
 
 
@@ -171,7 +170,7 @@ async def view_chat_history(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Chat session not found"
         )
-    
+
     return templates.TemplateResponse(
         "history.html",
         {

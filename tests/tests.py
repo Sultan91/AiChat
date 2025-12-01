@@ -1,4 +1,4 @@
-# tests/test_chat.py
+# tests/tests.py
 import pytest
 from fastapi import FastAPI
 from httpx import AsyncClient
