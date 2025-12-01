@@ -1,8 +1,9 @@
 # database.py
+import os
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import declarative_base
 
-DATABASE_URL = "sqlite+aiosqlite:////home/sula/PycharmProjects/AiChat/chat.db"
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 # Async engine
 engine = create_async_engine(

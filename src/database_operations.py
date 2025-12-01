@@ -1,5 +1,3 @@
-from typing import List
-
 from sqlalchemy import select, desc
 from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
