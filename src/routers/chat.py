@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi import Request, Response, status
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
-from typing import Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import delete
 from src.constants import SESSION_COOKIE_NAME
