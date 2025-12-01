@@ -1,5 +1,5 @@
 # Build stage
-FROM python:3.11-slim as builder
+FROM python:3.12.1-slim-bookworm as builder
 
 # Install Poetry
 ENV POETRY_VERSION=1.6.1 \
@@ -18,7 +18,7 @@ COPY pyproject.toml poetry.lock ./
 RUN /opt/poetry/bin/poetry install --only main --no-interaction --no-ansi
 
 # Runtime stage
-FROM python:3.11-slim
+FROM python:3.12.1-slim-bookworm
 
 # Create a non-root user
 RUN addgroup --system appgroup && \
@@ -27,16 +27,18 @@ RUN addgroup --system appgroup && \
 WORKDIR /app
 
 # Create data directory for SQLite
-RUN mkdir -p /app/data && \
+RUN mkdir -p /app/data  &&\
     chown -R appuser:appgroup /app/data
 
 # Copy installed dependencies from builder
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
+COPY --chmod=755 docker-entrypoint.sh /app/docker-entrypoint.sh
 # Copy application code
 COPY . .
-
+#RUN chmod +x /app/docker-entrypoint.sh
+RUN mkdir /app/src/knowledge_base
 # Set environment variables
 ENV PYTHONPATH=/app \
     PORT=8000 \
@@ -46,8 +48,7 @@ ENV PYTHONPATH=/app \
     DATABASE_URL=sqlite+aiosqlite:////app/data/db.sqlite
 
 # Set file permissions
-RUN chown -R appuser:appgroup /app \
-    && chmod +x /app/docker-entrypoint.sh
+RUN chown -R appuser:appgroup /app
 
 # Switch to non-root user
 USER appuser
