@@ -6,10 +6,11 @@ from fastapi.templating import Jinja2Templates
 from pathlib import Path
 from typing import Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from sqlalchemy import delete
 from src.constants import SESSION_COOKIE_NAME
 from src.database import get_session
 from src.database_operations import add_message, create_chat_session, get_chat_session, get_messages, get_all_chat_sessions
+from src.models import Message
 from src.schemas import ChatRequest, ChatResponse, ChatSessionOut
 from src.services.chat_service import generate_ai_response
 
@@ -113,6 +114,30 @@ async def list_chat_sessions(
         }
         for session in sessions
     ]
+
+
+@chat_router.delete("/sessions/{session_id}")
+async def delete_chat_session(
+    session_id: str,
+    db: AsyncSession = Depends(get_session)
+):
+    """Delete a chat session and all its messages"""
+    session = await get_chat_session(db, session_id)
+    if not session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chat session not found"
+        )
+    
+    # Delete messages first due to foreign key constraint
+    await db.execute(
+        delete(Message).where(Message.session_id == session.id)
+    )
+    # Then delete the session
+    await db.delete(session)
+    await db.commit()
+    
+    return {"status": "success", "message": "Session deleted successfully"}
 
 
 @chat_router.get("/sessions/page")
